@@ -16,7 +16,7 @@ autotune = tf.data.AUTOTUNE
 # Prepare dataset
 # Load the horse-zebra dataset using tensorflow-datasets.
 from glob import glob
-TRAIN_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train5000'
+TRAIN_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train'
 TEST_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train1000'
 # train_dog_files = np.array(glob(os.path.join(DATA_FOLDER, 'dog.*.jpg')))
 # train_cat_files = np.array(glob(os.path.join(DATA_FOLDER, 'cat.*.jpg')))
@@ -538,8 +538,7 @@ model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
 # 7 minutes on a single P100 backed machine.
 cycle_gan_model.fit(
     tf.data.Dataset.zip((train_dogs, train_cats)),
-    epochs=40,
-    steps_per_epoch=1000,
+    epochs=100,
     batch_size=batch_size,
     callbacks=[plotter],
 )
