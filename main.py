@@ -15,9 +15,19 @@ autotune = tf.data.AUTOTUNE
 
 # Prepare dataset
 # Load the horse-zebra dataset using tensorflow-datasets.
-dataset, _ = tfds.load("cycle_gan/horse2zebra", with_info=True, as_supervised=True)
-train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
-test_horses, test_zebras = dataset["testA"], dataset["testB"]
+from glob import glob
+TRAIN_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train5000'
+TEST_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train1000'
+# train_dog_files = np.array(glob(os.path.join(DATA_FOLDER, 'dog.*.jpg')))
+# train_cat_files = np.array(glob(os.path.join(DATA_FOLDER, 'cat.*.jpg')))
+
+train_dogs = tf.data.Dataset.list_files(os.path.join(TRAIN_DATA_FOLDER, 'dog.*.jpg'))
+train_cats = tf.data.Dataset.list_files(os.path.join(TRAIN_DATA_FOLDER, 'cat.*.jpg'))
+test_dogs = tf.data.Dataset.list_files(os.path.join(TEST_DATA_FOLDER, 'dog.*.jpg'))
+test_cats = tf.data.Dataset.list_files(os.path.join(TEST_DATA_FOLDER, 'cat.*.jpg'))
+# dataset, _ = tfds.load("cycle_gan/horse2zebra", with_info=True, as_supervised=True)
+# train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
+# test_horses, test_zebras = dataset["testA"], dataset["testB"]
 
 # Define the standard image size.
 orig_img_size = (286, 286)
@@ -38,7 +48,11 @@ def normalize_img(img):
     return (img / 127.5) - 1.0
 
 
-def preprocess_train_image(img, label):
+def preprocess_train_image(img):
+    # Load image
+    img = tf.io.read_file(img)
+    # Decode
+    img = tf.image.decode_jpeg(img)
     # Random flip
     img = tf.image.random_flip_left_right(img)
     # Resize to the original size first
@@ -50,7 +64,11 @@ def preprocess_train_image(img, label):
     return img
 
 
-def preprocess_test_image(img, label):
+def preprocess_test_image(img):
+    # Load image
+    img = tf.io.read_file(img)
+    # Decode
+    img = tf.image.decode_jpeg(img)
     # Only resizing and normalization for the test images.
     img = tf.image.resize(img, [input_img_size[0], input_img_size[1]])
     img = normalize_img(img)
@@ -58,28 +76,28 @@ def preprocess_test_image(img, label):
 
 # Create datasets
 # Apply the preprocessing operations to the training data
-train_horses = (
-    train_horses.map(preprocess_train_image, num_parallel_calls=autotune)
+train_dogs = (
+    train_dogs.map(preprocess_train_image, num_parallel_calls=autotune)
     .cache()
     .shuffle(buffer_size)
     .batch(batch_size)
 )
-train_zebras = (
-    train_zebras.map(preprocess_train_image, num_parallel_calls=autotune)
+train_cats = (
+    train_cats.map(preprocess_train_image, num_parallel_calls=autotune)
     .cache()
     .shuffle(buffer_size)
     .batch(batch_size)
 )
 
 # Apply the preprocessing operations to the test data
-test_horses = (
-    test_horses.map(preprocess_test_image, num_parallel_calls=autotune)
+test_dogs = (
+    test_dogs.map(preprocess_test_image, num_parallel_calls=autotune)
     .cache()
     .shuffle(buffer_size)
     .batch(batch_size)
 )
-test_zebras = (
-    test_zebras.map(preprocess_test_image, num_parallel_calls=autotune)
+test_cats = (
+    test_cats.map(preprocess_test_image, num_parallel_calls=autotune)
     .cache()
     .shuffle(buffer_size)
     .batch(batch_size)
@@ -87,11 +105,11 @@ test_zebras = (
 
 # Visualize samples
 _, ax = plt.subplots(4, 2, figsize=(10, 15))
-for i, samples in enumerate(zip(train_horses.take(4), train_zebras.take(4))):
-    horse = (((samples[0][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
-    zebra = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
-    ax[i, 0].imshow(horse)
-    ax[i, 1].imshow(zebra)
+for i, samples in enumerate(zip(train_dogs.take(4), train_cats.take(4))):
+    dog = (((samples[0][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    cat = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    ax[i, 0].imshow(dog)
+    ax[i, 1].imshow(cat)
 #plt.show()
 plt.savefig("figure1.png")
 
@@ -454,7 +472,7 @@ class GANMonitor(keras.callbacks.Callback):
 
     def on_epoch_end(self, epoch, logs=None):
         _, ax = plt.subplots(4, 2, figsize=(12, 12))
-        for i, img in enumerate(test_horses.take(self.num_img)):
+        for i, img in enumerate(test_dogs.take(self.num_img)):
             prediction = self.model.gen_G(img)[0].numpy()
             prediction = (prediction * 127.5 + 127.5).astype(np.uint8)
             img = (img[0] * 127.5 + 127.5).numpy().astype(np.uint8)
@@ -515,7 +533,7 @@ model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
 # Here we will train the model for just one epoch as each epoch takes around
 # 7 minutes on a single P100 backed machine.
 cycle_gan_model.fit(
-    tf.data.Dataset.zip((train_horses, train_zebras)),
+    tf.data.Dataset.zip((train_dogs, train_cats)),
     epochs=1,
-    callbacks=[plotter, model_checkpoint_callback],
+    callbacks=[plotter],
 )
