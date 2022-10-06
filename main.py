@@ -539,6 +539,7 @@ model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
 cycle_gan_model.fit(
     tf.data.Dataset.zip((train_dogs, train_cats)),
     epochs=1,
+    steps_per_epoch=1000,
     batch_size=batch_size,
     callbacks=[plotter],
 )
