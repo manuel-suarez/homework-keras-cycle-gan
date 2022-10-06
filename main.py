@@ -20,11 +20,15 @@ TRAIN_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train500
 TEST_DATA_FOLDER = '/home/est_posgrado_manuel.suarez/data/dogs-vs-cats/train1000'
 # train_dog_files = np.array(glob(os.path.join(DATA_FOLDER, 'dog.*.jpg')))
 # train_cat_files = np.array(glob(os.path.join(DATA_FOLDER, 'cat.*.jpg')))
+train_dogs_files = np.array(glob(os.path.join(TRAIN_DATA_FOLDER, 'dog.*.jpg')))
+train_cats_files = np.array(glob(os.path.join(TRAIN_DATA_FOLDER, 'cat.*.jpg')))
+test_dogs_files = np.array(glob(os.path.join(TEST_DATA_FOLDER, 'dog.*.jpg')))
+test_cats_files = np.array(glob(os.path.join(TEST_DATA_FOLDER, 'cat.*.jpg')))
 
-train_dogs = tf.data.Dataset.list_files(os.path.join(TRAIN_DATA_FOLDER, 'dog.*.jpg'))
-train_cats = tf.data.Dataset.list_files(os.path.join(TRAIN_DATA_FOLDER, 'cat.*.jpg'))
-test_dogs = tf.data.Dataset.list_files(os.path.join(TEST_DATA_FOLDER, 'dog.*.jpg'))
-test_cats = tf.data.Dataset.list_files(os.path.join(TEST_DATA_FOLDER, 'cat.*.jpg'))
+train_dogs = tf.data.Dataset.list_files(train_dogs_files)
+train_cats = tf.data.Dataset.list_files(train_cats_files)
+test_dogs = tf.data.Dataset.list_files(test_dogs_files)
+test_cats = tf.data.Dataset.list_files(test_cats_files)
 # dataset, _ = tfds.load("cycle_gan/horse2zebra", with_info=True, as_supervised=True)
 # train_horses, train_zebras = dataset["trainA"], dataset["trainB"]
 # test_horses, test_zebras = dataset["testA"], dataset["testB"]
@@ -38,9 +42,7 @@ kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 # Gamma initializer for instance normalization.
 gamma_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 
-buffer_size = 1024
 batch_size = 16
-
 
 def normalize_img(img):
     img = tf.cast(img, dtype=tf.float32)
@@ -76,30 +78,32 @@ def preprocess_test_image(img):
 
 # Create datasets
 # Apply the preprocessing operations to the training data
+TRAIN_BUFFER_SIZE = len(train_dogs_files)
 train_dogs = (
     train_dogs.map(preprocess_train_image, num_parallel_calls=autotune)
     .cache()
-    .shuffle(buffer_size)
+    .shuffle(TRAIN_BUFFER_SIZE)
     .batch(batch_size)
 )
 train_cats = (
     train_cats.map(preprocess_train_image, num_parallel_calls=autotune)
     .cache()
-    .shuffle(buffer_size)
+    .shuffle(TRAIN_BUFFER_SIZE)
     .batch(batch_size)
 )
 
 # Apply the preprocessing operations to the test data
+TEST_BUFFER_SIZE = len(test_dogs_files)
 test_dogs = (
     test_dogs.map(preprocess_test_image, num_parallel_calls=autotune)
     .cache()
-    .shuffle(buffer_size)
+    .shuffle(TEST_BUFFER_SIZE)
     .batch(batch_size)
 )
 test_cats = (
     test_cats.map(preprocess_test_image, num_parallel_calls=autotune)
     .cache()
-    .shuffle(buffer_size)
+    .shuffle(TEST_BUFFER_SIZE)
     .batch(batch_size)
 )
 
@@ -535,5 +539,6 @@ model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
 cycle_gan_model.fit(
     tf.data.Dataset.zip((train_dogs, train_cats)),
     epochs=1,
+    batch_size=batch_size,
     callbacks=[plotter],
 )
