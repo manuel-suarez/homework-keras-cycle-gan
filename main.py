@@ -39,7 +39,7 @@ kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 gamma_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 
 buffer_size = 1024
-batch_size = 32
+batch_size = 16
 
 
 def normalize_img(img):
