@@ -92,7 +92,8 @@ for i, samples in enumerate(zip(train_horses.take(4), train_zebras.take(4))):
     zebra = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
     ax[i, 0].imshow(horse)
     ax[i, 1].imshow(zebra)
-plt.show()
+#plt.show()
+plt.savefig("figure1.png")
 
 # Building blocks
 class ReflectionPadding2D(layers.Layer):
@@ -461,7 +462,8 @@ class GANMonitor(keras.callbacks.Callback):
             prediction.save(
                 "generated_img_{i}_{epoch}.png".format(i=i, epoch=epoch + 1)
             )
-        plt.show()
+        #plt.show()
+        plt.savefig("figure_img_{i}_{epoch}.png".format(i=i, epoch=epoch + 1))
         plt.close()
 
 # Train end-to-end model
