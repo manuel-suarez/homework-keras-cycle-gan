@@ -55,3 +55,32 @@ def preprocess_test_image(img, label):
     img = tf.image.resize(img, [input_img_size[0], input_img_size[1]])
     img = normalize_img(img)
     return img
+
+# Create datasets
+# Apply the preprocessing operations to the training data
+train_horses = (
+    train_horses.map(preprocess_train_image, num_parallel_calls=autotune)
+    .cache()
+    .shuffle(buffer_size)
+    .batch(batch_size)
+)
+train_zebras = (
+    train_zebras.map(preprocess_train_image, num_parallel_calls=autotune)
+    .cache()
+    .shuffle(buffer_size)
+    .batch(batch_size)
+)
+
+# Apply the preprocessing operations to the test data
+test_horses = (
+    test_horses.map(preprocess_test_image, num_parallel_calls=autotune)
+    .cache()
+    .shuffle(buffer_size)
+    .batch(batch_size)
+)
+test_zebras = (
+    test_zebras.map(preprocess_test_image, num_parallel_calls=autotune)
+    .cache()
+    .shuffle(buffer_size)
+    .batch(batch_size)
+)
