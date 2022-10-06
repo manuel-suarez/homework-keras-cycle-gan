@@ -463,3 +463,49 @@ class GANMonitor(keras.callbacks.Callback):
             )
         plt.show()
         plt.close()
+
+# Train end-to-end model
+# Loss function for evaluating adversarial loss
+adv_loss_fn = keras.losses.MeanSquaredError()
+
+# Define the loss function for the generators
+def generator_loss_fn(fake):
+    fake_loss = adv_loss_fn(tf.ones_like(fake), fake)
+    return fake_loss
+
+
+# Define the loss function for the discriminators
+def discriminator_loss_fn(real, fake):
+    real_loss = adv_loss_fn(tf.ones_like(real), real)
+    fake_loss = adv_loss_fn(tf.zeros_like(fake), fake)
+    return (real_loss + fake_loss) * 0.5
+
+
+# Create cycle gan model
+cycle_gan_model = CycleGan(
+    generator_G=gen_G, generator_F=gen_F, discriminator_X=disc_X, discriminator_Y=disc_Y
+)
+
+# Compile the model
+cycle_gan_model.compile(
+    gen_G_optimizer=keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5),
+    gen_F_optimizer=keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5),
+    disc_X_optimizer=keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5),
+    disc_Y_optimizer=keras.optimizers.Adam(learning_rate=2e-4, beta_1=0.5),
+    gen_loss_fn=generator_loss_fn,
+    disc_loss_fn=discriminator_loss_fn,
+)
+# Callbacks
+plotter = GANMonitor()
+checkpoint_filepath = "./model_checkpoints/cyclegan_checkpoints.{epoch:03d}"
+model_checkpoint_callback = keras.callbacks.ModelCheckpoint(
+    filepath=checkpoint_filepath
+)
+
+# Here we will train the model for just one epoch as each epoch takes around
+# 7 minutes on a single P100 backed machine.
+cycle_gan_model.fit(
+    tf.data.Dataset.zip((train_horses, train_zebras)),
+    epochs=1,
+    callbacks=[plotter, model_checkpoint_callback],
+)
