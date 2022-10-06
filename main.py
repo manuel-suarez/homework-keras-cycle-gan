@@ -437,6 +437,14 @@ class CycleGan(keras.Model):
             "D_Y_loss": disc_Y_loss,
         }
 
+    def call(self, inputs):
+        real_x, real_y = inputs
+        # Horse to fake zebra
+        fake_y = self.gen_G(real_x, training=True)
+        # Zebra to fake horse -> y2x
+        fake_x = self.gen_F(real_y, training=True)
+        return fake_y, fake_x
+
 # Monitor callback
 class GANMonitor(keras.callbacks.Callback):
     """A callback to generate and save images after each epoch"""
