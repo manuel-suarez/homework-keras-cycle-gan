@@ -38,8 +38,8 @@ kernel_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 # Gamma initializer for instance normalization.
 gamma_init = keras.initializers.RandomNormal(mean=0.0, stddev=0.02)
 
-buffer_size = 256
-batch_size = 1
+buffer_size = 1024
+batch_size = 64
 
 
 def normalize_img(img):
