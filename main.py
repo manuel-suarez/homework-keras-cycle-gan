@@ -84,3 +84,12 @@ test_zebras = (
     .shuffle(buffer_size)
     .batch(batch_size)
 )
+
+# Visualize samples
+_, ax = plt.subplots(4, 2, figsize=(10, 15))
+for i, samples in enumerate(zip(train_horses.take(4), train_zebras.take(4))):
+    horse = (((samples[0][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    zebra = (((samples[1][0] * 127.5) + 127.5).numpy()).astype(np.uint8)
+    ax[i, 0].imshow(horse)
+    ax[i, 1].imshow(zebra)
+plt.show()
